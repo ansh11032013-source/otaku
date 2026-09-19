@@ -419,6 +419,39 @@
   .upload-status{font-size:12px;color:var(--text-dim);margin-top:8px;min-height:14px;}
   .upload-status.uploading{color:var(--pink-soft);}
   .upload-status.error{color:#ff7a9c;}
+
+  /* ---------- product detail modal ---------- */
+  .detail-box{
+    max-width:640px;padding:0;overflow:hidden;position:relative;
+    display:flex;flex-direction:column;
+  }
+  .detail-close{
+    position:absolute;top:14px;right:14px;z-index:2;
+    background:rgba(10,9,13,0.55);border-color:rgba(255,255,255,0.12);
+  }
+  .detail-media{
+    width:100%;aspect-ratio:4/3;
+    background:linear-gradient(150deg,#241c3a,#120f1a);
+    display:flex;align-items:center;justify-content:center;
+    overflow:hidden;
+  }
+  .detail-media img{width:100%;height:100%;object-fit:cover;}
+  .detail-media svg{width:72px;height:72px;opacity:.5;}
+  .detail-info{padding:26px 28px 30px;}
+  .detail-tag{position:static;display:inline-block;margin-bottom:10px;}
+  .detail-info h3{font-size:22px;font-weight:700;font-family:'Noto Sans';margin-bottom:8px;}
+  .detail-price{font-size:20px;margin-bottom:14px;}
+  .detail-desc{font-size:14px;color:var(--text-dim);line-height:1.6;margin-bottom:22px;}
+  .detail-qty-row{
+    display:flex;align-items:center;justify-content:space-between;
+    margin-bottom:20px;font-size:13.5px;color:var(--text-dim);
+  }
+  .detail-add-btn{width:100%;justify-content:center;padding:14px;font-size:15px;}
+  @media (min-width:560px){
+    .detail-box{flex-direction:row;max-width:680px;}
+    .detail-media{width:46%;aspect-ratio:auto;}
+    .detail-info{width:54%;}
+  }
   .modal-actions{display:flex;gap:10px;margin-top:22px;}
   .err-msg{color:#ff7a9c;font-size:12.5px;margin-top:-6px;margin-bottom:14px;min-height:16px;}
 
@@ -624,6 +657,29 @@
   </div>
 </div>
 
+<!-- product detail modal (customer-facing quick view) -->
+<div class="modal-overlay" id="detailModal">
+  <div class="modal-box detail-box">
+    <button class="close-x detail-close" id="detailCloseBtn">✕</button>
+    <div class="detail-media" id="detailMedia"></div>
+    <div class="detail-info">
+      <span class="card-tag detail-tag" id="detailTag"></span>
+      <h3 id="detailName"></h3>
+      <p class="price detail-price" id="detailPrice"></p>
+      <p class="detail-desc" id="detailDesc"></p>
+      <div class="detail-qty-row">
+        <span>quantity</span>
+        <div class="qty-row">
+          <button class="qty-btn" id="detailQtyDec">−</button>
+          <span id="detailQtyVal">1</span>
+          <button class="qty-btn" id="detailQtyInc">+</button>
+        </div>
+      </div>
+      <button class="btn btn-primary detail-add-btn" id="detailAddBtn">add to cart</button>
+    </div>
+  </div>
+</div>
+
 <!-- admin login modal -->
 <div class="modal-overlay" id="loginModal">
   <div class="modal-box">
@@ -787,6 +843,7 @@
     list.forEach(function(p){
       var card = document.createElement('div');
       card.className = 'card cat-' + p.category + (p.inStock===false ? ' oos' : '');
+      card.setAttribute('data-view-id', p.id);
       var mediaInner = p.image
         ? '<img src="'+escapeHtml(p.image)+'" alt="'+escapeHtml(p.name)+'" loading="lazy">'
         : placeholderIcon;
@@ -804,8 +861,15 @@
         '</div>';
       grid.appendChild(card);
     });
+    grid.querySelectorAll('.card').forEach(function(card){
+      card.addEventListener('click', function(e){
+        if(e.target.closest('.add-btn')) return;
+        openDetailModal(card.getAttribute('data-view-id'));
+      });
+    });
     grid.querySelectorAll('.add-btn').forEach(function(btn){
-      btn.addEventListener('click', function(){
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
         addToCart(btn.getAttribute('data-id'));
       });
     });
@@ -948,6 +1012,53 @@
     btn.classList.add('active');
     activeCat = btn.getAttribute('data-cat');
     renderProducts();
+  });
+
+  /* ---------- product detail modal ---------- */
+  var detailModal = document.getElementById('detailModal');
+  var detailQty = 1;
+  var detailProductId = null;
+
+  function openDetailModal(id){
+    var p = findProduct(id);
+    if(!p) return;
+    detailProductId = id;
+    detailQty = 1;
+    document.getElementById('detailQtyVal').textContent = detailQty;
+    document.getElementById('detailMedia').innerHTML = p.image
+      ? '<img src="'+escapeHtml(p.image)+'" alt="'+escapeHtml(p.name)+'">'
+      : placeholderIcon;
+    document.getElementById('detailTag').textContent = p.category==='figures' ? 'figure' : 'keychain';
+    document.getElementById('detailName').textContent = p.name;
+    document.getElementById('detailPrice').textContent = money(p.price);
+    document.getElementById('detailDesc').textContent = p.description || '';
+    var addBtn = document.getElementById('detailAddBtn');
+    addBtn.textContent = p.inStock===false ? 'sold out' : 'add to cart';
+    addBtn.disabled = p.inStock===false;
+    addBtn.style.opacity = p.inStock===false ? '0.5' : '1';
+    detailModal.classList.add('show');
+  }
+
+  document.getElementById('detailCloseBtn').addEventListener('click', function(){
+    detailModal.classList.remove('show');
+  });
+  detailModal.addEventListener('click', function(e){
+    if(e.target === detailModal) detailModal.classList.remove('show');
+  });
+  document.getElementById('detailQtyDec').addEventListener('click', function(){
+    if(detailQty > 1){ detailQty--; document.getElementById('detailQtyVal').textContent = detailQty; }
+  });
+  document.getElementById('detailQtyInc').addEventListener('click', function(){
+    detailQty++; document.getElementById('detailQtyVal').textContent = detailQty;
+  });
+  document.getElementById('detailAddBtn').addEventListener('click', function(){
+    var p = findProduct(detailProductId);
+    if(!p || p.inStock===false) return;
+    cart[detailProductId] = (cart[detailProductId]||0) + detailQty;
+    saveCart();
+    renderCart();
+    showToast(detailQty + ' × ' + p.name + ' added to cart');
+    detailModal.classList.remove('show');
   });
 
   /* ---------- admin login ---------- */
