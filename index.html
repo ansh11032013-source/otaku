@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Otaku Heaven | Anime Figures & Keychains</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Navbar -->
+    <header class="navbar">
+        <div class="logo">OTAKU <span>HEAVEN</span></div>
+        <nav>
+            <a href="#shop">Shop</a>
+            <button class="cart-btn" onclick="toggleCart()">🛒 Cart (<span id="cart-count">0</span>)</button>
+            <button class="admin-login-btn" onclick="openAdminModal()">🔒 Admin Panel</button>
+        </nav>
+    </header>
+
+    <!-- Hero Banner (Mixed Aesthetic Backgrounds via CSS) -->
+    <section class="hero">
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+            <h1>Your Ultimate Anime Treasures</h1>
+            <p>Premium Figures, Keychains, and Collectibles for True Fans</p>
+            <a href="#shop" class="cta-btn">Explore Collection</a>
+        </div>
+    </section>
+
+    <!-- Main Shop Area -->
+    <main id="shop" class="shop-container">
+        <h2>Our Collection</h2>
+        <div class="products-grid" id="products-container">
+            <!-- Products injected dynamically via JavaScript -->
+        </div>
+    </main>
+
+    <!-- Cart Sidebar Drawer -->
+    <div id="cart-drawer" class="cart-drawer">
+        <div class="cart-header">
+            <h3>Shopping Cart</h3>
+            <button class="close-btn" onclick="toggleCart()">&times;</button>
+        </div>
+        <div id="cart-items" class="cart-items">
+            <!-- Cart items dynamically rendered -->
+        </div>
+        <div class="cart-footer">
+            <div class="cart-total">Total: ₹<span id="cart-total-val">0</span></div>
+            <button class="checkout-btn" onclick="checkoutToWhatsApp()">Order via WhatsApp 💬</button>
+        </div>
+    </div>
+
+    <!-- Admin Panel Modal -->
+    <div id="admin-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeAdminModal()">&times;</span>
+            
+            <!-- Login State -->
+            <div id="admin-login-section">
+                <h3>Admin Authentication</h3>
+                <p class="error-msg" id="login-error"></p>
+                <input type="password" id="admin-pass-input" placeholder="Enter Admin Password">
+                <button class="submit-btn" onclick="verifyAdminLogin()">Login</button>
+            </div>
+
+            <!-- Management Dashboard State (Hidden by default) -->
+            <div id="admin-dashboard-section" style="display: none;">
+                <h3>Product Management Dashboard</h3>
+                <p class="success-msg" id="dashboard-msg"></p>
+                <div class="add-product-form">
+                    <h4>Add New Anime Product</h4>
+                    <input type="text" id="new-prod-name" placeholder="Product Name (e.g., Neon Genesis Figure)">
+                    <input type="number" id="new-prod-price" placeholder="Price in ₹">
+                    <input type="text" id="new-prod-img" placeholder="Image URL (or placeholder text)">
+                    <button class="submit-btn" onclick="addNewProduct()">Add Product to Live Store</button>
+                </div>
+                <hr>
+                <button class="logout-btn" onclick="logoutAdmin()">Logout Panel</button>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 Otaku Heaven. Seamless delivery across India via tracked shipping networks.</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
