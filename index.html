@@ -524,6 +524,31 @@
   @media(max-width:520px){
     .promo-strip{font-size:12.5px; padding:9px 10px;}
   }
+  /* ---------- shop gift strip (sticky while browsing products) ---------- */
+  .shop-gift-strip{
+    position:sticky;
+    top:64px;
+    z-index:30;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    background:rgba(138,92,255,0.16);
+    border:1px solid rgba(255,63,166,0.4);
+    border-radius:999px;
+    padding:9px 18px;
+    margin:0 auto 26px;
+    max-width:fit-content;
+    font-family:'Noto Sans',sans-serif;
+    font-size:13px;
+    font-weight:600;
+    color:var(--text);
+    backdrop-filter:blur(6px);
+  }
+  .shop-gift-strip .dot{color:var(--pink);}
+  @media(max-width:520px){
+    .shop-gift-strip{font-size:12px; padding:8px 14px; top:58px;}
+  }
   /* ---------- cart gift banner ---------- */
   .gift-banner{
     font-family:'Noto Sans',sans-serif;
@@ -605,6 +630,7 @@
         <p>pick your poison — pastel and precious, or moody and dramatic. everything ships carefully wrapped.</p>
       </div>
     </div>
+    <div class="shop-gift-strip"><span class="dot">🎁</span> free gift worth ₹599 on orders above ₹1599</div>
     <div class="tabs" id="tabs">
       <button class="tab active" data-cat="all">all pieces</button>
       <button class="tab" data-cat="figures">figures</button>
