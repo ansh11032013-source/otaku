@@ -496,6 +496,17 @@
   .publish-bar .wrap{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;}
   .publish-bar p{font-size:12.5px;color:var(--text-dim);}
 
+  /* ---------- admin visitor stats ---------- */
+  .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:26px;}
+  .stat-card{
+    background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    padding:18px 20px;
+  }
+  .stat-card .stat-label{font-size:11.5px;text-transform:lowercase;color:var(--text-dim);letter-spacing:.02em;}
+  .stat-card .stat-num{font-family:'Zen Kaku Gothic New',sans-serif;font-weight:900;font-size:30px;margin-top:4px;color:var(--text);}
+  .stat-card .stat-sub{font-size:11px;color:var(--text-dim);margin-top:2px;}
+  @media (max-width:480px){ .stat-grid{grid-template-columns:1fr;} }
+
   @media (max-width:720px){
     .nav-links{display:none;}
     .about-grid{grid-template-columns:1fr;}
@@ -785,6 +796,18 @@
     </div>
   </div>
   <div class="admin-body wrap">
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-label">new visitors</div>
+        <div class="stat-num" id="statNewVisitors">—</div>
+        <div class="stat-sub">first-time visits, all time</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">returning visits</div>
+        <div class="stat-num" id="statReturningVisits">—</div>
+        <div class="stat-sub">visits from people who came back</div>
+      </div>
+    </div>
     <div class="admin-toolbar">
       <p style="color:var(--text-dim);font-size:13px;">changes only go live for everyone after you publish.</p>
       <button class="btn btn-primary" id="addProductBtn">+ add product</button>
@@ -871,6 +894,11 @@
   var BIN_KEY = "$2a$10$HF1KHOVsBB1fTRnL.o2QSOhSAwt3/Bw2sF4o.jCVyqasOVh.qhuOO";
   var BIN_URL = "https://api.jsonbin.io/v3/b/" + BIN_ID;
   var IMGBB_KEY = "f483e851772f42e219391a596491a08a";
+
+  // visitor tracking: create a SECOND free bin at jsonbin.io (same way BIN_ID
+  // above was made), paste its id here, and this starts working automatically.
+  var STATS_BIN_ID = "6ab20bb9ffd5d1605321be50";
+  var STATS_BIN_URL = "https://api.jsonbin.io/v3/b/" + STATS_BIN_ID;
 
   var placeholderIcon = '<svg class="media-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l2.4 5.2L20 8l-4 4 1 5.8L12 15l-5 2.8 1-5.8-4-4 5.6-.8z"/></svg>';
 
@@ -1187,6 +1215,72 @@
   function openAdmin(){
     adminOverlay.classList.add('show');
     renderAdminTable();
+    renderAdminStats();
+  }
+
+  /* ---------- visitor tracking ---------- */
+  // one visitor_id per browser (localStorage), so we can tell a first-time
+  // visit from a repeat visit without needing anyone to log in.
+  function getVisitorId(){
+    var id = null;
+    try{ id = localStorage.getItem('oh_visitor_id'); }catch(e){}
+    if(!id){
+      id = 'v' + Date.now() + Math.random().toString(16).slice(2);
+      try{ localStorage.setItem('oh_visitor_id', id); }catch(e){}
+    }
+    return id;
+  }
+
+  function trackVisit(){
+    if(STATS_BIN_ID.indexOf('PASTE_YOUR') === 0) return; // not set up yet
+    var isReturning = false;
+    try{ isReturning = !!localStorage.getItem('oh_visitor_id'); }catch(e){}
+    var visitorId = getVisitorId();
+
+    fetch(STATS_BIN_URL + "/latest", {
+      headers: { "X-Master-Key": BIN_KEY, "X-Bin-Meta": "false" }
+    })
+    .then(function(res){ if(!res.ok) throw new Error('fetch failed'); return res.json(); })
+    .then(function(stats){
+      stats = stats && typeof stats === 'object' ? stats : {};
+      stats.newVisitors = stats.newVisitors || 0;
+      stats.returningVisits = stats.returningVisits || 0;
+
+      if(isReturning){
+        stats.returningVisits += 1;
+      }else{
+        stats.newVisitors += 1;
+      }
+
+      return fetch(STATS_BIN_URL, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'X-Master-Key': BIN_KEY },
+        body: JSON.stringify(stats)
+      });
+    })
+    .catch(function(){ /* no internet / bin unreachable: skip silently */ });
+  }
+
+  function renderAdminStats(){
+    var newEl = document.getElementById('statNewVisitors');
+    var retEl = document.getElementById('statReturningVisits');
+    if(STATS_BIN_ID.indexOf('PASTE_YOUR') === 0){
+      newEl.textContent = '—';
+      retEl.textContent = '—';
+      return;
+    }
+    fetch(STATS_BIN_URL + "/latest", {
+      headers: { "X-Master-Key": BIN_KEY, "X-Bin-Meta": "false" }
+    })
+    .then(function(res){ if(!res.ok) throw new Error('fetch failed'); return res.json(); })
+    .then(function(stats){
+      newEl.textContent = (stats && stats.newVisitors) || 0;
+      retEl.textContent = (stats && stats.returningVisits) || 0;
+    })
+    .catch(function(){
+      newEl.textContent = '—';
+      retEl.textContent = '—';
+    });
   }
   document.getElementById('adminCloseBtn').addEventListener('click', function(){
     adminOverlay.classList.remove('show');
@@ -1398,6 +1492,7 @@
   renderProducts();
   renderCart();
   loadLiveProducts();
+  trackVisit();
 })();
 </script>
 </body>
